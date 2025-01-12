@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>День Рождения</title>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .delete-btn, .edit-link, .add-btn {
+            display: none; /* Скрываем элементы по умолчанию */
+        }
+        .view-mode .delete-btn, 
+        .view-mode .edit-link, 
+        .view-mode .add-btn {
+            display: none; /* Скрываем элементы в режиме просмотра */
+        }
+        .admin-mode .delete-btn, 
+        .admin-mode .edit-link, 
+        .admin-mode .add-btn {
+            display: inline; /* Показываем элементы в режиме администратора */
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body class="">
+    <div class="container">
+        <h1 class="text-success text-center">Мой День Рождения</h1>
+
+        <!-- Список гостей -->
+        <div class="card">
+            <h2 class="text-primary">Список гостей</h2>
+            <ul class="list-group" id="guest-list"></ul>
+            <button class="btn btn-success mt-3 add-btn" onclick="addGuest()">Добавить гостя</button>
+        </div>
+
+        <!-- Список желаний -->
+        <div class="card">
+            <h2 class="text-primary">Список желаний</h2>
+            <ul class="list-group" id="gift-list"></ul>
+            <button class="btn btn-success mt-3 add-btn" onclick="addGift()">Добавить элемент</button>
+        </div>
+    </div>
+
+    <!-- Подвал -->
+    <footer>
+        <p>Управляйте своим списком гостей и подарков 🎉</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Определение режима работы
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode'); // Получаем значение параметра "mode"
+        const isViewMode = mode === 'view';
+
+        // Установка класса для body
+        document.body.classList.add(isViewMode ? 'view-mode' : 'admin-mode');
+
+        // Загрузка данных из localStorage
+        function loadData() {
+            const guests = JSON.parse(localStorage.getItem('guests')) || [];
+            const gifts = JSON.parse(localStorage.getItem('gifts')) || [];
+
+            const guestList = document.getElementById('guest-list');
+            const giftList = document.getElementById('gift-list');
+
+            guestList.innerHTML = '';
+            giftList.innerHTML = '';
+
+            guests.forEach((guest, index) => {
+                const li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.innerHTML = `
+                    <span>${guest.name}</span>
+                    ${!isViewMode ? `
+                    <span class="edit-link" onclick="editItem('guests', ${index}, 'contact')">${guest.contact || 'Добавить контакт'}</span>
+                    <span class="delete-btn" onclick="deleteItem('guests', ${index})">×</span>
+                    ` : ''}
+                `;
+                guestList.appendChild(li);
+            });
+
+            gifts.forEach((gift, index) => {
+                const li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.innerHTML = `
+                    <span>${gift.name}</span>
+                    ${!isViewMode ? `
+                    <span class="delete-btn" onclick="deleteItem('gifts', ${index})">×</span>
+                    ` : ''}
+                `;
+                giftList.appendChild(li);
+            });
+        }
+
+        // Универсальная функция для добавления
+        function addItem(type) {
+            const name = prompt(type === 'guests' ? 'Введите имя гостя:' : 'Введите название подарка:');
+            if (name) {
+                const data = JSON.parse(localStorage.getItem(type)) || [];
+                data.push({ name, contact: '' });
+                localStorage.setItem(type, JSON.stringify(data));
+                loadData();
+            }
+        }
+
+        function addGuest() { addItem('guests'); }
+        function addGift() { addItem('gifts'); }
+
+        // Универсальная функция для редактирования
+        function editItem(type, index, field) {
+            const data = JSON.parse(localStorage.getItem(type)) || [];
+            const value = prompt(`Измените ${field === 'name' ? 'название' : 'контакт'}:`, data[index][field]);
+            if (value !== null) {
+                data[index][field] = value;
+                localStorage.setItem(type, JSON.stringify(data));
+                loadData();
+            }
+        }
+
+        // Универсальная функция для удаления
+        function deleteItem(type, index) {
+            if (confirm('Вы уверены, что хотите удалить?')) {
+                const data = JSON.parse(localStorage.getItem(type)) || [];
+                data.splice(index, 1);
+                localStorage.setItem(type, JSON.stringify(data));
+                loadData();
+            }
+        }
+
+        // Загрузка данных при открытии страницы
+        window.onload = loadData;
+    </script>
+</body>
+</html>
